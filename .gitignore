@@ -1,0 +1,29 @@
+# Зависимости
+node_modules/
+
+# Сборка
+dist/
+build/
+
+# Секреты и настройки окружения
+.env
+.env.local
+.env.*.local
+
+# Логи
+logs/
+*.log
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+.DS_Store
+
+# Тесты
+coverage/
+
+# Загруженные файлы (папку храним, содержимое — нет)
+uploads/*
+!uploads/.gitkeep
