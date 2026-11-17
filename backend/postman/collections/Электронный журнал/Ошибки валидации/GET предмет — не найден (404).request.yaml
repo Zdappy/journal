@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/subjects/999999"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 404', function () {
+          pm.response.to.have.status(404);
+      });
+      pm.test('Сообщение о ненайденном предмете', function () {
+          pm.expect(pm.response.json().message).to.include('не найден');
+      });
+    language: text/javascript
+order: 5000

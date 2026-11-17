@@ -1,0 +1,8 @@
+$kind: collection
+description: Автотесты REST API курсового проекта «Электронный журнал»
+variables:
+  baseUrl: http://localhost:3000/api
+  subjectId: ""
+  subjectName: ""
+  classId: ""
+  classYear: ""

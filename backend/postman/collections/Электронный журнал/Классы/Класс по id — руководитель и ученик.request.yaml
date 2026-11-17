@@ -1,0 +1,19 @@
+$kind: http-request
+name: Класс по id — руководитель и ученики
+url: "{{baseUrl}}/classes/1"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', function () {
+          pm.response.to.have.status(200);
+      });
+      const json = pm.response.json();
+      pm.test('Классный руководитель — Иванов', function () {
+          pm.expect(json.homeroomTeacher.user.lastname).to.eql('Иванов');
+      });
+      pm.test('В классе два ученика', function () {
+          pm.expect(json.students).to.have.lengthOf(2);
+      });
+    language: text/javascript
+order: 3000

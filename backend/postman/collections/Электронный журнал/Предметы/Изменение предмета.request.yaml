@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/subjects/{{subjectId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "description": "Обновлённое описание"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('Описание обновилось', function () {
+          pm.expect(pm.response.json().description).to.eql('Обновлённое описание');
+      });
+    language: text/javascript
+order: 7000

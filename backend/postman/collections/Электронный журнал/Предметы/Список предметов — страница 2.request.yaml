@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/subjects?page=2&limit=3"
+method: GET
+queryParams:
+  page: "2"
+  limit: "3"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', function () {
+          pm.response.to.have.status(200);
+      });
+      const json = pm.response.json();
+      pm.test('Вернулась страница 2', function () {
+          pm.expect(json.page).to.eql(2);
+      });
+      pm.test('На странице не более 3 записей', function () {
+          pm.expect(json.items.length).to.be.at.most(3);
+      });
+    language: text/javascript
+order: 4000

@@ -1,0 +1,720 @@
+{
+  "info": {
+    "_postman_id": "e-journal-0001",
+    "name": "Электронный журнал",
+    "description": "Автотесты REST API курсового проекта «Электронный журнал»",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "subjectId", "value": "" },
+    { "key": "subjectName", "value": "" },
+    { "key": "classId", "value": "" },
+    { "key": "classYear", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Предметы",
+      "item": [
+        {
+          "name": "Список предметов",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Ответ содержит items, total, page, limit, pages', function () {",
+                  "    pm.expect(json).to.have.all.keys('items', 'total', 'page', 'limit', 'pages');",
+                  "});",
+                  "pm.test('В базе не менее 7 предметов', function () {",
+                  "    pm.expect(json.total).to.be.at.least(7);",
+                  "});",
+                  "pm.test('items — массив', function () {",
+                  "    pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/subjects", "host": ["{{baseUrl}}"], "path": ["subjects"] }
+          }
+        },
+        {
+          "name": "Список предметов — поиск без учёта регистра",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Поиск вернул хотя бы один предмет', function () {",
+                  "    pm.expect(json.items.length).to.be.at.least(1);",
+                  "});",
+                  "pm.test('Все найденные содержат «мат»', function () {",
+                  "    json.items.forEach(function (i) {",
+                  "        pm.expect(i.name.toLowerCase()).to.include('мат');",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects?search=мат",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects"],
+              "query": [{ "key": "search", "value": "мат" }]
+            }
+          }
+        },
+        {
+          "name": "Список предметов — сортировка по названию",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "const names = json.items.map(function (i) { return i.name; });",
+                  "const sorted = names.slice().sort(function (a, b) { return a.localeCompare(b, 'ru'); });",
+                  "pm.test('Список отсортирован по названию по возрастанию', function () {",
+                  "    pm.expect(names).to.eql(sorted);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects?sort=name_asc&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects"],
+              "query": [
+                { "key": "sort", "value": "name_asc" },
+                { "key": "limit", "value": "50" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Список предметов — страница 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Вернулась страница 2', function () {",
+                  "    pm.expect(json.page).to.eql(2);",
+                  "});",
+                  "pm.test('На странице не более 3 записей', function () {",
+                  "    pm.expect(json.items.length).to.be.at.most(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects?page=2&limit=3",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects"],
+              "query": [
+                { "key": "page", "value": "2" },
+                { "key": "limit", "value": "3" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Добавление предмета",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('subjectName', 'Тестовый предмет ' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Сервер присвоил id', function () {",
+                  "    pm.expect(json.id).to.be.a('number');",
+                  "});",
+                  "pm.collectionVariables.set('subjectId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{subjectName}}\",\n  \"description\": \"Предмет для автотестов\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/subjects", "host": ["{{baseUrl}}"], "path": ["subjects"] }
+          }
+        },
+        {
+          "name": "Получение добавленного предмета",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Название совпадает с созданным', function () {",
+                  "    pm.expect(json.name).to.eql(pm.collectionVariables.get('subjectName'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects/{{subjectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects", "{{subjectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Изменение предмета",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Описание обновилось', function () {",
+                  "    pm.expect(pm.response.json().description).to.eql('Обновлённое описание');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Обновлённое описание\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/subjects/{{subjectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects", "{{subjectId}}"]
+            }
+          }
+        },
+        {
+          "name": "Удаление предмета",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('В сообщении есть слово «удалён»', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('удалён');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects/{{subjectId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects", "{{subjectId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Классы",
+      "item": [
+        {
+          "name": "Список классов",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('В базе не менее 3 классов', function () {",
+                  "    pm.expect(json.total).to.be.at.least(3);",
+                  "});",
+                  "pm.test('Ответ содержит items и total', function () {",
+                  "    pm.expect(json).to.have.property('items');",
+                  "    pm.expect(json).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/classes", "host": ["{{baseUrl}}"], "path": ["classes"] }
+          }
+        },
+        {
+          "name": "Список классов — фильтр по учебному году",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Все классы имеют academic_year = 2026', function () {",
+                  "    json.items.forEach(function (i) {",
+                  "        pm.expect(i.academic_year).to.eql(2026);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/classes?academic_year=2026",
+              "host": ["{{baseUrl}}"],
+              "path": ["classes"],
+              "query": [{ "key": "academic_year", "value": "2026" }]
+            }
+          }
+        },
+        {
+          "name": "Класс по id — руководитель и ученики",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Классный руководитель — Иванов', function () {",
+                  "    pm.expect(json.homeroomTeacher.user.lastname).to.eql('Иванов');",
+                  "});",
+                  "pm.test('В классе два ученика', function () {",
+                  "    pm.expect(json.students).to.have.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/classes/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["classes", "1"]
+            }
+          }
+        },
+        {
+          "name": "Добавление класса",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('classYear', String(2027 + (Date.now() % 70)));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Класс создан с названием 9А', function () {",
+                  "    pm.expect(json.name).to.eql('9А');",
+                  "});",
+                  "pm.collectionVariables.set('classId', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"9А\",\n  \"academic_year\": {{classYear}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/classes", "host": ["{{baseUrl}}"], "path": ["classes"] }
+          }
+        },
+        {
+          "name": "Назначение классного руководителя",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "pm.test('Руководитель назначен', function () {",
+                  "    pm.expect(json.homeroom_teacher_id).to.eql(1);",
+                  "});",
+                  "pm.test('Подтянулись ФИО руководителя (include)', function () {",
+                  "    pm.expect(json.homeroomTeacher.user.lastname).to.eql('Иванов');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"homeroom_teacher_id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/classes/{{classId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["classes", "{{classId}}"]
+            }
+          }
+        },
+        {
+          "name": "Удаление класса",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('В сообщении есть слово «удалён»', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('удалён');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/classes/{{classId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["classes", "{{classId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ошибки валидации",
+      "item": [
+        {
+          "name": "POST предмет — пустое тело (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('message — массив сообщений валидации', function () {",
+                  "    pm.expect(pm.response.json().message).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{baseUrl}}/subjects", "host": ["{{baseUrl}}"], "path": ["subjects"] }
+          }
+        },
+        {
+          "name": "POST предмет — лишнее поле (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "const msg = Array.isArray(json.message) ? json.message.join(' ') : json.message;",
+                  "pm.test('Сервер отклонил лишнее поле id', function () {",
+                  "    pm.expect(msg).to.include('should not exist');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Физика\",\n  \"id\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/subjects", "host": ["{{baseUrl}}"], "path": ["subjects"] }
+          }
+        },
+        {
+          "name": "POST предмет — дубликат названия (409)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "pm.test('Понятное сообщение фильтра Sequelize', function () {",
+                  "    pm.expect(pm.response.json().message).to.eql('Предмет с таким названием уже существует');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Математика\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/subjects", "host": ["{{baseUrl}}"], "path": ["subjects"] }
+          }
+        },
+        {
+          "name": "GET предмет — id не число (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects/abc",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects", "abc"]
+            }
+          }
+        },
+        {
+          "name": "GET предмет — не найден (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test('Сообщение о ненайденном предмете', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('не найден');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/subjects/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["subjects", "999999"]
+            }
+          }
+        },
+        {
+          "name": "POST класс — неверный формат названия (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "const msg = Array.isArray(json.message) ? json.message.join(' ') : json.message;",
+                  "pm.test('Сообщение про формат «5А»', function () {",
+                  "    pm.expect(msg).to.include('формат');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"5а\",\n  \"academic_year\": 2026\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/classes", "host": ["{{baseUrl}}"], "path": ["classes"] }
+          }
+        },
+        {
+          "name": "POST класс — несуществующий учитель (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test('Сообщение про учителя', function () {",
+                  "    pm.expect(pm.response.json().message).to.include('Учитель');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"8Б\",\n  \"academic_year\": 2026,\n  \"homeroom_teacher_id\": 9999\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/classes", "host": ["{{baseUrl}}"], "path": ["classes"] }
+          }
+        },
+        {
+          "name": "DELETE класс — не найден (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Статус 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/classes/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["classes", "999999"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

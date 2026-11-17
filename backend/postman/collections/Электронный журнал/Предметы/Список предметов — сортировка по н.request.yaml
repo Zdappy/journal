@@ -1,0 +1,21 @@
+$kind: http-request
+name: Список предметов — сортировка по названию
+url: "{{baseUrl}}/subjects?sort=name_asc&limit=50"
+method: GET
+queryParams:
+  sort: name_asc
+  limit: "50"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', function () {
+          pm.response.to.have.status(200);
+      });
+      const json = pm.response.json();
+      const names = json.items.map(function (i) { return i.name; });
+      const sorted = names.slice().sort(function (a, b) { return a.localeCompare(b, 'ru'); });
+      pm.test('Список отсортирован по названию по возрастанию', function () {
+          pm.expect(names).to.eql(sorted);
+      });
+    language: text/javascript
+order: 3000

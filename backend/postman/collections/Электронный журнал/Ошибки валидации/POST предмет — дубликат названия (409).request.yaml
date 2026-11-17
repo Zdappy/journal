@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{baseUrl}}/subjects"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Математика"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 409', function () {
+          pm.response.to.have.status(409);
+      });
+      pm.test('Понятное сообщение фильтра Sequelize', function () {
+          pm.expect(pm.response.json().message).to.eql('Предмет с таким названием уже существует');
+      });
+    language: text/javascript
+order: 3000

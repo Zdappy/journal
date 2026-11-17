@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/subjects/{{subjectId}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test('В сообщении есть слово «удалён»', function () {
+          pm.expect(pm.response.json().message).to.include('удалён');
+      });
+    language: text/javascript
+order: 8000

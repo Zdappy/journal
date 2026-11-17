@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
+import { SequelizeExceptionFilter } from './common/filters/sequelize-exception.filter.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -23,6 +24,9 @@ async function bootstrap() {
       transform: true,            // преобразовывать строки в числа и т.д.
     }),
   );
+
+  // Превращаем ошибки базы данных в понятные ответы 409 / 400
+  app.useGlobalFilters(new SequelizeExceptionFilter());
 
   // Настройка Swagger UI
   const swaggerConfig = new DocumentBuilder()
