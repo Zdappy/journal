@@ -62,15 +62,18 @@ export class SubjectService {
     return subject;
   }
 
-  /** Добавление предмета. Дубликат названия перехватит фильтр Sequelize (409) */
   create(dto: CreateSubjectDto): Promise<Subject> {
-    return this.subjectModel.create({ ...dto });
+    // Поля перечислены явно: объектный литерал подходит по типу Sequelize.create,
+    // а spread на экземпляре DTO ругается линтером (no-misused-spread)
+    return this.subjectModel.create({
+      name: dto.name,
+      description: dto.description,
+    });
   }
 
-  /** Изменение предмета */
   async update(id: number, dto: UpdateSubjectDto): Promise<Subject> {
     const subject = await this.findOne(id); // если не найден — будет 404
-    return subject.update({ ...dto });
+    return subject.update(dto);
   }
 
   /** Удаление предмета */

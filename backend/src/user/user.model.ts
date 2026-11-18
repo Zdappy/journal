@@ -1,5 +1,8 @@
-import { Column, DataType, DefaultScope, Model, Table } from 'sequelize-typescript';
+import { Column, DataType, DefaultScope, HasOne, Model, Table } from 'sequelize-typescript';
 import { Role } from '../common/enums/role.enum.js';
+import { Teacher } from '../teacher/teacher.model.js';
+import { Student } from '../student/student.model.js';
+import { Parent } from '../parent/parent.model.js';
 
 // Поле password не выбирается из БД в обычных запросах,
 // чтобы хеш пароля случайно не попал в ответ клиенту
@@ -30,10 +33,20 @@ export class User extends Model {
   @Column({ type: DataType.STRING(30) })
   declare middlename: string | null;
 
-  /** Путь к аватарке, например /uploads/avatars/xxx.jpg */
   @Column({ type: DataType.STRING(255) })
   declare url_avatar: string | null;
 
   @Column({ type: DataType.DATE, allowNull: false, defaultValue: DataType.NOW })
   declare created_at: Date;
+
+  // ------- Профиль роли (заполнен только один из трёх) -------
+
+  @HasOne(() => Teacher, { foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  declare teacher: Teacher | null;
+
+  @HasOne(() => Student, { foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  declare student: Student | null;
+
+  @HasOne(() => Parent, { foreignKey: 'user_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  declare parent: Parent | null;
 }

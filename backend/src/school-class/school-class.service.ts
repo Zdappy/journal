@@ -104,7 +104,12 @@ export class SchoolClassService {
   async create(dto: CreateSchoolClassDto): Promise<SchoolClass> {
     await this.ensureTeacherExists(dto.homeroom_teacher_id);
     // Дубликат пары (name, academic_year) перехватит фильтр Sequelize → 409
-    const created = await this.classModel.create({ ...dto });
+    const created = await this.classModel.create({
+      name: dto.name,
+      academic_year: dto.academic_year,
+      homeroom_teacher_id: dto.homeroom_teacher_id,
+      started_at: dto.started_at,
+    });
     return this.findOne(created.id);
   }
 
@@ -117,7 +122,7 @@ export class SchoolClassService {
     if (dto.homeroom_teacher_id !== undefined) {
       await this.ensureTeacherExists(dto.homeroom_teacher_id);
     }
-    await schoolClass.update({ ...dto });
+    await schoolClass.update(dto);
     return this.findOne(id);
   }
 

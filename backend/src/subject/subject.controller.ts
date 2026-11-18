@@ -8,15 +8,20 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SubjectService } from './subject.service.js';
 import { CreateSubjectDto } from './dto/create-subject.dto.js';
 import { UpdateSubjectDto } from './dto/update-subject.dto.js';
 import { SubjectQueryDto } from './dto/subject-query.dto.js';
+import { AuthGuard } from '../auth/guards/auth.guard.js';
+import { RolesGuard } from '../auth/guards/roles.guard.js';
+import { Roles } from '../auth/decorators/roles.decorator.js';
+import { Role } from '../common/enums/role.enum.js';
 
 @ApiTags('Предметы')
-@Controller('subjects') // все маршруты начинаются с /api/subjects
+@Controller('subjects')
 export class SubjectController {
   constructor(private readonly subjectService: SubjectService) {}
 
@@ -33,21 +38,32 @@ export class SubjectController {
     return this.subjectService.findOne(id);
   }
 
-  @ApiOperation({ summary: 'Добавление предмета' })
+  @ApiOperation({ summary: 'Добавление предмета (только учитель)' })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Teacher)
   @ApiResponse({ status: 201, description: 'Предмет добавлен' })
+  @ApiResponse({ status: 401, description: 'Требуется авторизация' })
+  @ApiResponse({ status: 403, description: 'Недостаточно прав' })
   @ApiResponse({ status: 409, description: 'Предмет с таким названием уже существует' })
   @Post()
   create(@Body() dto: CreateSubjectDto) {
     return this.subjectService.create(dto);
   }
 
-  @ApiOperation({ summary: 'Изменение предмета' })
+  @ApiOperation({ summary: 'Изменение предмета (только учитель)' })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Teacher)
   @Patch(':id')
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateSubjectDto) {
     return this.subjectService.update(id, dto);
   }
 
-  @ApiOperation({ summary: 'Удаление предмета' })
+  @ApiOperation({ summary: 'Удаление предмета (только учитель)' })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Teacher)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.subjectService.remove(id);

@@ -13,6 +13,7 @@ import { SubjectModule } from './subject/subject.module.js';
 import { TeacherSubjectClassModule } from './teacher-subject-class/teacher-subject-class.module.js';
 import { GradeModule } from './grade/grade.module.js';
 import { AbsenceModule } from './absence/absence.module.js';
+import { AuthModule } from './auth/auth.module.js';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { AbsenceModule } from './absence/absence.module.js';
     TeacherSubjectClassModule,
     GradeModule,
     AbsenceModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
