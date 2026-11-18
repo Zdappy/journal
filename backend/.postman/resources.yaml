@@ -6,7 +6,7 @@ workspace:
 
 cloudResources:
   collections:
-    ../postman/collections/Электронный журнал: eb5bd221-064d-4add-ac65-971e1b5491d0
+    ../postman/collections/Электронный журнал: bc96156f-8cda-4a48-8f80-5c78c77f5556
 
 # All resources in the `postman/` folder are automatically registered in Local View.
 # Point to additional files outside the `postman/` folder to register them individually. Example:
