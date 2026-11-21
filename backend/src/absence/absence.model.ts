@@ -4,7 +4,11 @@ import { Teacher } from '../teacher/teacher.model.js';
 import { TeacherSubjectClass } from '../teacher-subject-class/teacher-subject-class.model.js';
 import { AbsenceType } from '../common/enums/absence-type.enum.js';
 
-@Table({ tableName: 'absence', timestamps: false })
+@Table({
+  tableName: 'absence',
+  timestamps: false,
+  indexes: [{ unique: true, fields: ['student_id', 'assignment_id', 'lesson_date'] }],
+})
 export class Absence extends Model {
   @Column({ type: DataType.INTEGER, autoIncrement: true, primaryKey: true })
   declare id: number;
