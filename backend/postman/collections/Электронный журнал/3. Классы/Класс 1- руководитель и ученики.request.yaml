@@ -1,0 +1,15 @@
+$kind: http-request
+name: "Класс 1: руководитель и ученики"
+url: "{{baseUrl}}/classes/1"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      pm.test('Руководитель Иванов', () => pm.expect(json.homeroomTeacher.user.lastname).to.eql('Иванов'));
+      pm.test('Двое учеников', () => pm.expect(json.students).to.have.lengthOf(2));
+    language: text/javascript
+order: 3000

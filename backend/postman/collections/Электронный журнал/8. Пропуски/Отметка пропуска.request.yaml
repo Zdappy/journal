@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/absences"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "student_id": 1,
+      "assignment_id": 1,
+      "lesson_date": "2026-11-20",
+      "absence_type": "Болезнь",
+      "reason": "Автотест"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 201', () => pm.response.to.have.status(201));
+      const json = pm.response.json();
+      pm.collectionVariables.set('absenceId', json.id);
+    language: text/javascript
+order: 4000

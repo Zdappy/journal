@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, type Includeable, type Order, type WhereOptions } from 'sequelize';
+import { Op, QueryTypes, type Includeable, type Order, type WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Grade } from './grade.model.js';
 import { Student } from '../student/student.model.js';
@@ -42,7 +42,7 @@ export interface StudentAverage {
   subjects: SubjectAverage[];
 }
 
-/** Строка результата SQL-агрегации */
+/** Строка результата SQL-агрегации (PostgreSQL возвращает числа строками) */
 interface AverageRow {
   student_id: number;
   subject_id: number;
@@ -136,7 +136,8 @@ export class GradeService {
   async create(user: JwtPayload, dto: CreateGradeDto): Promise<Grade> {
     // Учитель может работать только со своим назначением
     await this.access.assertTeacherOwnsAssignment(user, dto.assignment_id);
-    await this.access.studentById(dto.student_id);
+    // Ученик должен учиться в классе этого назначения
+    await this.access.assertStudentInAssignmentClass(dto.student_id, dto.assignment_id);
 
     const gradeType = dto.grade_type ?? GradeType.Lesson;
     const teacherId = await this.access.teacherIdOf(user);
@@ -155,7 +156,7 @@ export class GradeService {
     return this.findOne(user, created.id);
   }
 
-  /** Изменение оценки: только автор-учитель своего назначения */
+  /** Изменение оценки: только учитель своего назначения */
   async update(user: JwtPayload, id: number, dto: UpdateGradeDto): Promise<Grade> {
     const grade = await this.gradeModel.findByPk(id);
     if (!grade) {
@@ -166,9 +167,11 @@ export class GradeService {
     if (dto.assignment_id !== undefined && dto.assignment_id !== grade.assignment_id) {
       await this.access.assertTeacherOwnsAssignment(user, dto.assignment_id);
     }
-    if (dto.student_id !== undefined) {
-      await this.access.studentById(dto.student_id);
-    }
+    // Проверяем итоговую пару «ученик + назначение»
+    await this.access.assertStudentInAssignmentClass(
+      dto.student_id ?? grade.student_id,
+      dto.assignment_id ?? grade.assignment_id,
+    );
 
     const gradeType = dto.grade_type ?? grade.grade_type;
 
@@ -230,7 +233,7 @@ export class GradeService {
        WHERE g.student_id IN (:ids)
        GROUP BY g.student_id, sub.id, sub.name
        ORDER BY g.student_id, sub.name`,
-      { replacements: { ids }, type: 'SELECT' as never },
+      { replacements: { ids }, type: QueryTypes.SELECT },
     );
 
     const students = await this.access.studentsByIds(ids);
@@ -295,13 +298,25 @@ export class GradeService {
   private buildOrder(sort?: string): Order {
     switch (sort) {
       case 'date_asc':
-        return [['lesson_date', 'ASC'], ['id', 'ASC']];
+        return [
+          ['lesson_date', 'ASC'],
+          ['id', 'ASC'],
+        ];
       case 'value_desc':
-        return [['value', 'DESC'], ['id', 'ASC']];
+        return [
+          ['value', 'DESC'],
+          ['id', 'ASC'],
+        ];
       case 'value_asc':
-        return [['value', 'ASC'], ['id', 'ASC']];
+        return [
+          ['value', 'ASC'],
+          ['id', 'ASC'],
+        ];
       default:
-        return [['lesson_date', 'DESC'], ['id', 'DESC']];
+        return [
+          ['lesson_date', 'DESC'],
+          ['id', 'DESC'],
+        ];
     }
   }
 

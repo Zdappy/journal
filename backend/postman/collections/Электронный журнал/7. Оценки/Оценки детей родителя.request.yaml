@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/grades"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{parentToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      pm.test('Девять оценок двоих детей', () => pm.expect(json.total).to.eql(9));
+    language: text/javascript
+order: 4000

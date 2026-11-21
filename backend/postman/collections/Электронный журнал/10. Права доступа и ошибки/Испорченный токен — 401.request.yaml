@@ -1,0 +1,12 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/profile"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{badToken}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('Статус 401', () => pm.response.to.have.status(401));
+    language: text/javascript
+order: 7000

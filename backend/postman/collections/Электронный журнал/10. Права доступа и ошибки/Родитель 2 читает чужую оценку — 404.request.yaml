@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/grades/1"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{parent2Token}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 404', () => pm.response.to.have.status(404));
+      const json = pm.response.json();
+      pm.test('Чужие данные не раскрыты', () => pm.expect(json.message).to.include('не найден'));
+    language: text/javascript
+order: 14000

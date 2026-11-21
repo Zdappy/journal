@@ -1,0 +1,23 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "parent2",
+      "password": "123456"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      pm.test('Выдан токен', () => pm.expect(json.access_token).to.be.a('string'));
+      pm.collectionVariables.set('parent2Token', json.access_token);
+    language: text/javascript
+order: 5000

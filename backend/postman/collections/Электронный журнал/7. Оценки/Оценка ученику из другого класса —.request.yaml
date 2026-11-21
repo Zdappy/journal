@@ -1,0 +1,23 @@
+$kind: http-request
+name: Оценка ученику из другого класса — 400
+url: "{{baseUrl}}/grades"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "student_id": 3,
+      "assignment_id": 1,
+      "value": 5,
+      "lesson_date": "2026-11-20"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 400', () => pm.response.to.have.status(400));
+      const json = pm.response.json();
+      pm.test('Сообщение про класс', () => pm.expect(json.message).to.include('не учится в классе'));
+    language: text/javascript
+order: 11000

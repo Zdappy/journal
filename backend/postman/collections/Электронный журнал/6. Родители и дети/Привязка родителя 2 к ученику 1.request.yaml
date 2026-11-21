@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/parent-student"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "parent_id": 2,
+      "student_id": 1
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 201', () => pm.response.to.have.status(201));
+      const json = pm.response.json();
+      pm.collectionVariables.set('linkId', json.id);
+    language: text/javascript
+order: 6000

@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/profile"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      pm.test('Роль Учитель', () => pm.expect(json.role).to.eql('Учитель'));
+      pm.test('Есть профиль учителя', () => pm.expect(json.teacher).to.be.an('object'));
+      pm.test('Пароль скрыт', () => pm.expect(json).to.not.have.property('password'));
+    language: text/javascript
+order: 8000

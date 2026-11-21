@@ -1,14 +1,19 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Teacher } from '../teacher/teacher.model.js';
 import { Student } from '../student/student.model.js';
 import { Parent } from '../parent/parent.model.js';
 import { ParentStudent } from '../parent-student/parent-student.model.js';
 import { TeacherSubjectClass } from '../teacher-subject-class/teacher-subject-class.model.js';
-import { Role } from '../common/enums/role.enum.js';
-import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface.js';
 import { User } from '../user/user.model.js';
 import { SchoolClass } from '../school-class/school-class.model.js';
+import { Role } from '../common/enums/role.enum.js';
+import type { JwtPayload } from '../auth/interfaces/jwt-payload.interface.js';
 
 /**
  * Единая точка проверки прав на данные журнала.
@@ -29,6 +34,7 @@ export class JournalAccessService {
 
   // ---------- Профили по токену ----------
 
+  /** В токене лежит user.id, а в журнале нужен teacher.id */
   async teacherIdOf(user: JwtPayload): Promise<number> {
     const teacher = await this.teacherModel.findOne({ where: { user_id: user.sub } });
     if (!teacher) {
@@ -98,7 +104,9 @@ export class JournalAccessService {
     }
     return student;
   }
-    async studentsByIds(ids: number[]): Promise<Student[]> {
+
+  /** Ученики по списку id: с ФИО и классом — для отчётов */
+  async studentsByIds(ids: number[]): Promise<Student[]> {
     if (ids.length === 0) {
       return [];
     }
@@ -112,15 +120,37 @@ export class JournalAccessService {
     });
   }
 
-  /** Ученик видит только себя. Про чужих данных не сообщаем (404, а не 403) */
+  /**
+   * Ученик должен учиться в том классе, где ведёт занятие назначение.
+   * Без этой проверки учитель математики 5А мог бы поставить оценку ученику 6Б.
+   */
+  async assertStudentInAssignmentClass(studentId: number, assignmentId: number): Promise<void> {
+    const student = await this.studentById(studentId);
+    const assignment = await this.assignmentById(assignmentId);
+    if (student.class_id !== assignment.class_id) {
+      throw new BadRequestException(
+        `Ученик с id=${studentId} не учится в классе этого назначения (класс ученика: ${student.class_id}, класс назначения: ${assignment.class_id})`,
+      );
+    }
+  }
+
+  /**
+   * Ученик видит только себя, родитель — только своих детей.
+   * Про чужие данные не сообщаем: 404, а не 403.
+   */
   async assertCanViewStudent(user: JwtPayload, studentId: number): Promise<Student> {
     const student = await this.studentById(studentId);
+
     if (user.role === Role.Student) {
       const ownId = await this.studentIdOf(user);
       if (ownId !== studentId) {
         throw new NotFoundException(`Ученик с id=${studentId} не найден`);
       }
+    } else if (user.role === Role.Parent) {
+      // Без этой проверки родитель мог прочитать журнал любого ученика по id
+      await this.assertParentOfStudent(user, studentId);
     }
+
     return student;
   }
 

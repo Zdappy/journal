@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/assignments"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "teacher_id": 1,
+      "subject_id": 1,
+      "class_id": 1
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 409', () => pm.response.to.have.status(409));
+      const json = pm.response.json();
+      pm.test('Сообщение фильтра', () => pm.expect(json.message).to.include('уже ведёт'));
+    language: text/javascript
+order: 7000

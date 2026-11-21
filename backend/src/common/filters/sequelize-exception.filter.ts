@@ -58,6 +58,10 @@ export class SequelizeExceptionFilter implements ExceptionFilter {
     if (target.includes('user_id')) {
       return 'Профиль для этого пользователя уже создан';
     }
+    // Пропуск: уникальность (student_id, assignment_id, lesson_date)
+    if (target.includes('absence')) {
+      return 'На эту дату у ученика уже отмечен пропуск по данному предмету';
+    }
     if (target.includes('parent_id') && target.includes('student_id')) {
       return 'Этот родитель уже привязан к данному ученику';
     }

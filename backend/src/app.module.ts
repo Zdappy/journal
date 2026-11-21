@@ -22,7 +22,7 @@ import { AbsenceModule } from './absence/absence.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { JournalAccessModule } from './journal-access/journal-access.module.js';
 import { ReportModule } from './report/report.module.js';
-
+import { ImportModule } from './import/import.module.js';
 @Module({
   imports: [
     // Загружает переменные из файла .env.
@@ -69,6 +69,7 @@ import { ReportModule } from './report/report.module.js';
     AuthModule,
     JournalAccessModule,
     ReportModule,
+    ImportModule, 
   ],
 })
 export class AppModule {}

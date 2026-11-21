@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/reports/parent"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{parentToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      pm.test('Два ребёнка', () => pm.expect(json).to.have.lengthOf(2));
+      const first = json.find((r) => r.student_id === 1);
+      pm.test('Общий балл 4.25', () => pm.expect(first.overall_average).to.eql(4.25));
+      pm.test('Есть предметы и пропуски', () => { pm.expect(first.subjects).to.be.an('array'); pm.expect(first.absences).to.be.an('object'); });
+    language: text/javascript
+order: 1000

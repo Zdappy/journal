@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/grades/average"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{studentToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      const s = json[0].subjects;
+      const math = s.find((x) => x.subject_name === 'Математика');
+      const rus = s.find((x) => x.subject_name === 'Русский язык');
+      pm.test('Математика 3.75', () => pm.expect(math.average).to.eql(3.75));
+      pm.test('Русский язык 4.67', () => pm.expect(rus.average).to.eql(4.67));
+      pm.test('Вес контрольной учтён', () => pm.expect(math.total_weight).to.eql(4));
+    language: text/javascript
+order: 5000

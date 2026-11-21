@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/import/grades?academic_year=2026"
+method: POST
+queryParams:
+  academic_year: "2026"
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src: []
+scripts:
+  - type: afterResponse
+    code: |-
+      // Без выбранного файла сервер отвечает 400 — это тоже корректное поведение
+      pm.test('Импорт: 201 (файл выбран) или 400 (файл не выбран)', () => pm.expect([201, 400]).to.include(pm.response.code));
+    language: text/javascript
+order: 1000

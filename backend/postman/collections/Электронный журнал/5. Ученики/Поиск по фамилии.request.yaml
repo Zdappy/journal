@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/students?search=петров"
+method: GET
+queryParams:
+  search: петров
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      pm.test('Найдены Петровы', () => pm.expect(json.total).to.be.at.least(2));
+    language: text/javascript
+order: 2000

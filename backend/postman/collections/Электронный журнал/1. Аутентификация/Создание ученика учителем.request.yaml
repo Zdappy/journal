@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/users"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "student_test",
+      "password": "123456",
+      "role": "Ученик",
+      "lastname": "Тестовый",
+      "firstname": "Ученик",
+      "class_id": 2
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Создан или уже существует', () => pm.expect([201, 409]).to.include(pm.response.code));
+    language: text/javascript
+order: 10000

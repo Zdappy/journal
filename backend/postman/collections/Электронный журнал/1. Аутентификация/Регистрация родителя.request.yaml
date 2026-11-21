@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{baseUrl}}/auth/register"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "parent_test",
+      "password": "123456",
+      "lastname": "Тестовая",
+      "firstname": "Мама",
+      "phone": "+7-900-000-00-00"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Создан или уже существует', () => pm.expect([201, 409]).to.include(pm.response.code));
+      const json = pm.response.json();
+      pm.test('Пароль не возвращается', () => pm.expect(json).to.not.have.property('password'));
+    language: text/javascript
+order: 6000

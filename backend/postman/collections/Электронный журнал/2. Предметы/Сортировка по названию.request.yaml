@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/subjects?sort=name_asc&limit=50"
+method: GET
+queryParams:
+  sort: name_asc
+  limit: "50"
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      const names = json.items.map((i) => i.name);
+      pm.test('Отсортировано по алфавиту', () => pm.expect(names).to.eql(names.slice().sort((a, b) => a.localeCompare(b, 'ru'))));
+    language: text/javascript
+order: 3000

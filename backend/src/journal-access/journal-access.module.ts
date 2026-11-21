@@ -12,14 +12,8 @@ import { JournalAccessService } from './journal-access.service.js';
 @Module({
   imports: [
     SequelizeModule.forFeature([
-      Teacher,
-      Student,
-      Parent,
-      ParentStudent,
-      TeacherSubjectClass,
-      User,
-      SchoolClass,
-    ]),
+  Teacher, Student, Parent, ParentStudent, TeacherSubjectClass, User, SchoolClass,
+]),
   ],
   providers: [JournalAccessService],
   exports: [JournalAccessService],

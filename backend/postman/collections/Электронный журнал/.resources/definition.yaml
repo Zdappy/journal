@@ -1,8 +1,24 @@
 $kind: collection
-description: Автотесты REST API курсового проекта «Электронный журнал»
+description: "Автотесты REST API курсового проекта «Электронный журнал». Перед прогоном выполнить database/seed.sql. Папку «11. Импорт Excel» в Runner отключать не обязательно: тест принимает 201 или 400."
 variables:
   baseUrl: http://localhost:3000/api
+  teacherToken: ""
+  teacher2Token: ""
+  studentToken: ""
+  parentToken: ""
+  parent2Token: ""
   subjectId: ""
   subjectName: ""
   classId: ""
   classYear: ""
+  assignmentId: ""
+  linkId: ""
+  gradeId: ""
+  absenceId: ""
+  badToken: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjF9.broken
+auth:
+  - id: 6e4f43ae-83c4-4b5f-b496-6d20ee557f2f
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{teacherToken}}"

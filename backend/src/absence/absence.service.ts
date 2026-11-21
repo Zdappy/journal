@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, type Includeable, type Order, type WhereOptions } from 'sequelize';
+import { Op, QueryTypes, type Includeable, type Order, type WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { Absence } from './absence.model.js';
 import { Student } from '../student/student.model.js';
@@ -79,8 +79,14 @@ export class AbsenceService {
     const where = await this.buildWhere(user, query);
     const order: Order =
       query.sort === 'date_asc'
-        ? [['lesson_date', 'ASC'], ['id', 'ASC']]
-        : [['lesson_date', 'DESC'], ['id', 'DESC']];
+        ? [
+            ['lesson_date', 'ASC'],
+            ['id', 'ASC'],
+          ]
+        : [
+            ['lesson_date', 'DESC'],
+            ['id', 'DESC'],
+          ];
 
     const { rows, count } = await this.absenceModel.findAndCountAll({
       where,
@@ -106,7 +112,7 @@ export class AbsenceService {
   /** Отметить пропуск. Повторная отметка на ту же дату запрещена (409) */
   async create(user: JwtPayload, dto: CreateAbsenceDto): Promise<Absence> {
     await this.access.assertTeacherOwnsAssignment(user, dto.assignment_id);
-    await this.access.studentById(dto.student_id);
+    await this.access.assertStudentInAssignmentClass(dto.student_id, dto.assignment_id);
     const teacherId = await this.access.teacherIdOf(user);
 
     const created = await this.absenceModel.create({
@@ -131,9 +137,10 @@ export class AbsenceService {
     if (dto.assignment_id !== undefined && dto.assignment_id !== absence.assignment_id) {
       await this.access.assertTeacherOwnsAssignment(user, dto.assignment_id);
     }
-    if (dto.student_id !== undefined) {
-      await this.access.studentById(dto.student_id);
-    }
+    await this.access.assertStudentInAssignmentClass(
+      dto.student_id ?? absence.student_id,
+      dto.assignment_id ?? absence.assignment_id,
+    );
 
     await absence.update({
       student_id: dto.student_id ?? absence.student_id,
@@ -177,7 +184,7 @@ export class AbsenceService {
        FROM absence
        WHERE student_id IN (:ids)
        GROUP BY student_id, absence_type`,
-      { replacements: { ids }, type: 'SELECT' as never },
+      { replacements: { ids }, type: QueryTypes.SELECT },
     );
 
     return ids.map((id) => {
@@ -205,15 +212,24 @@ export class AbsenceService {
     const conditions: WhereOptions[] = [];
 
     if (user.role === Role.Teacher) {
-      conditions.push({ assignment_id: { [Op.in]: await this.access.teacherAssignmentIds(user) } });
+      conditions.push({
+        assignment_id: { [Op.in]: await this.access.teacherAssignmentIds(user) },
+      });
     } else {
-      conditions.push({ student_id: { [Op.in]: (await this.access.readableStudentIds(user)) ?? [] } });
+      conditions.push({
+        student_id: { [Op.in]: (await this.access.readableStudentIds(user)) ?? [] },
+      });
     }
 
-    if (query.student_id !== undefined) conditions.push({ student_id: query.student_id });
-    if (query.assignment_id !== undefined) conditions.push({ assignment_id: query.assignment_id });
-    if (query.absence_type !== undefined) conditions.push({ absence_type: query.absence_type });
-
+    if (query.student_id !== undefined) {
+      conditions.push({ student_id: query.student_id });
+    }
+    if (query.assignment_id !== undefined) {
+      conditions.push({ assignment_id: query.assignment_id });
+    }
+    if (query.absence_type !== undefined) {
+      conditions.push({ absence_type: query.absence_type });
+    }
     if (query.date_from && query.date_to) {
       conditions.push({ lesson_date: { [Op.between]: [query.date_from, query.date_to] } });
     } else if (query.date_from) {

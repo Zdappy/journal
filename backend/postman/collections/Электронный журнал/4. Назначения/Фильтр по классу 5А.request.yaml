@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/assignments?class_id=1"
+method: GET
+queryParams:
+  class_id: "1"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Статус 200', () => pm.response.to.have.status(200));
+      const json = pm.response.json();
+      pm.test('Три назначения класса 5А', () => pm.expect(json.total).to.eql(3));
+    language: text/javascript
+order: 5000
